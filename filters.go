@@ -14,6 +14,7 @@ var (
 	multiNewlinePattern = regexp.MustCompile(`(\r\n|\r|\n){2,}`)
 	specialCharsPattern = regexp.MustCompile(`[^a-zA-Z0-9_-]`)
     crossReferencePattern = regexp.MustCompile(`<ref>((?:.|\r\n)*?)<\/ref>`)
+    lineSpacePreservePattern = regexp.MustCompile(`\n(\s)*\^`)
 )
 
 // PFilter splits the content by new lines and wraps each one in a <p> tag.
@@ -71,7 +72,9 @@ func HtmlFilter(lookupMap map[string]lookup) func(string) (string, error) {
         }
       }
       replacements = append(replacements, str[cursor:])
-      return strings.Join(replacements, ""), nil
+      joined := strings.Join(replacements, "")
+
+      return lineSpacePreservePattern.ReplaceAllString(joined, "\n"), nil
     }
 }
 
