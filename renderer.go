@@ -74,11 +74,37 @@ func (rt RenderType) template() ([]byte, error) {
 	return nil, errors.New("Couldn't find template for render type")
 }
 
-var funcMap = map[string]interface{}{
+type lookup struct {
+    name string
+    id  string
+}
+
+func funcMap(template *Template) (map[string]interface{}) {
+
+  lookupMap := make(map[string]lookup)
+  messageMap := make(map[string]*Message)
+
+  for _, file := range template.Files {
+    for _, service := range file.Services {
+      for _, method := range service.Methods {
+        lookupMap[service.Name + "." + method.Name] = lookup{id: service.FullName + "." + method.Name, name: method.Name}
+      }
+    }
+    for _, message := range file.Messages {
+      lookupMap[message.Name] = lookup{id: message.FullName, name: message.Name}
+      messageMap[message.FullName] = message
+    }
+  }
+
+  return map[string]interface{}{
 	"p":      PFilter,
 	"para":   ParaFilter,
 	"nobr":   NoBrFilter,
 	"anchor": AnchorFilter,
+    "html":   HtmlFilter(lookupMap),
+    "fieldMessage": FieldMessageFilter(messageMap),
+    "dict":   DictBuilder,
+  }
 }
 
 // Processor is an interface that is satisfied by all built-in processors (text, html, and json).
@@ -113,7 +139,7 @@ type textRenderer struct {
 }
 
 func (mr *textRenderer) Apply(template *Template) ([]byte, error) {
-	tmpl, err := text_template.New("Text Template").Funcs(funcMap).Funcs(sprig.TxtFuncMap()).Parse(mr.inputTemplate)
+	tmpl, err := text_template.New("Text Template").Funcs(funcMap(template)).Funcs(sprig.TxtFuncMap()).Parse(mr.inputTemplate)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +157,7 @@ type htmlRenderer struct {
 }
 
 func (mr *htmlRenderer) Apply(template *Template) ([]byte, error) {
-	tmpl, err := html_template.New("Text Template").Funcs(funcMap).Funcs(sprig.HtmlFuncMap()).Parse(mr.inputTemplate)
+	tmpl, err := html_template.New("Text Template").Funcs(funcMap(template)).Funcs(sprig.HtmlFuncMap()).Parse(mr.inputTemplate)
 	if err != nil {
 		return nil, err
 	}

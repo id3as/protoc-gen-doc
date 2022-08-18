@@ -471,7 +471,6 @@ func parseMessageExtension(pe *protokit.ExtensionDescriptor) *MessageExtension {
 
 func parseMessageField(pf *protokit.FieldDescriptor, oneofDecls []*descriptor.OneofDescriptorProto) *MessageField {
 	t, lt, ft := parseType(pf)
-
 	m := &MessageField{
 		Name:         pf.GetName(),
 		Description:  description(pf.GetComments().String()),
