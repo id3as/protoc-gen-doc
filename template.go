@@ -174,10 +174,12 @@ type Message struct {
 
 	HasExtensions bool `json:"hasExtensions"`
 	HasFields     bool `json:"hasFields"`
+	HasEnums      bool `json:"hasEnums"`
 	HasOneofs     bool `json:"hasOneofs"`
 
 	Extensions []*MessageExtension `json:"extensions"`
 	Fields     []*MessageField     `json:"fields"`
+	Enums      orderedEnums        `json:"enums"`
 
 	Options map[string]interface{} `json:"options,omitempty"`
 }
@@ -444,8 +446,10 @@ func parseMessage(pm *protokit.Descriptor) *Message {
 		HasExtensions: len(pm.GetExtensions()) > 0,
 		HasFields:     len(pm.GetMessageFields()) > 0,
 		HasOneofs:     len(pm.GetOneofDecl()) > 0,
+		HasEnums:      len(pm.GetEnums()) > 0,
 		Extensions:    make([]*MessageExtension, 0, len(pm.Extensions)),
 		Fields:        make([]*MessageField, 0, len(pm.Fields)),
+		Enums:         make([]*Enum, 0, len(pm.Enums)),
 		Options:       mergeOptions(extractOptions(pm.GetOptions()), extensions.Transform(pm.OptionExtensions)),
 	}
 
@@ -457,6 +461,9 @@ func parseMessage(pm *protokit.Descriptor) *Message {
 		msg.Fields = append(msg.Fields, parseMessageField(f, pm.GetOneofDecl()))
 	}
 
+	for _, e := range pm.Enums {
+		msg.Enums = append(msg.Enums, parseEnum(e))
+	}
 	return msg
 }
 
